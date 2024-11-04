@@ -1,0 +1,74 @@
+word_check_counter = 0  
+attempt_counter = 0      
+
+romania_letters = 'IERALOTNUCSĂMDPGBFȚȘZVHÂÎJXKQW'
+
+def load_words_from_file(file_path):
+    word_list = []
+    incomplete_words = []
+    
+    # Deschidem fisierul si citim cuvintele
+    with open(file_path, 'r', encoding='utf-8') as file:  # Folosim encoding-ul utf-8 pentru fisiere cu diacritice
+        for line in file:
+            words = line.strip().split(';')  # Separa cuvintele pe baza caracterului ";"
+            incomplete_words.append(words[1])  
+            word_list.append(words[2])        
+    
+    return word_list, incomplete_words  
+
+def try_to_complete_word(incomplete_word, complete_word, filtered_letters):
+    global attempt_counter
+    # Convertim cuvantul incomplet intr-o lista pentru modificare
+    incomplete_word_list = list(incomplete_word)
+    # Parcurgem fiecare litera din letters
+    for letter in filtered_letters:
+        attempt_counter += 1 
+        # Parcurgem fiecare pozitie din cuvantul incomplet
+        for i, inc_char in enumerate(incomplete_word_list):
+            # Daca caracterul curent este un asterisc si litera din cuvantul complet corespunde,inlocuim asteriscul cu litera curenta
+            if inc_char == '*' and complete_word[i] == letter:
+                incomplete_word_list[i] = letter
+        
+        # Convertim lista inapoi intr-un sir de caractere
+        completed_attempt = ''.join(incomplete_word_list)
+
+        # Verificam daca am completat cuvantul corect
+        if completed_attempt == complete_word:
+            return True  # Oprim functia, deoarece cuvantul a fost completat
+    
+    # Daca am terminat toate literele si nu am completat cuvantul, returnam False
+    return False
+
+def filter_letters(incomplete_word, romania_letters):
+    # Obtin literele unice din cuvantul incomplet, ignorand asteriscurile
+    used_letters = set(incomplete_word.replace("*", ""))
+    # Cream o lista cu literele care nu sunt in used_letters
+    filtered_letters = [letter for letter in romania_letters if letter not in used_letters]
+    
+    return ''.join(filtered_letters)  # Returnam ca sir de caractere
+
+def complete_incomplete_words(incomplete_words, word_list):
+    completed_words = []
+    # Parcurgem simultan listele de cuvinte incomplete si complete
+    for incomplete_word, complete_word in zip(incomplete_words, word_list):
+        filtered_letters = filter_letters(incomplete_word, romania_letters)
+        #global attempt_counter
+        # Verificam daca cuvantul complet corespunde cuvantului incomplet
+        if try_to_complete_word(incomplete_word, complete_word, filtered_letters):
+            completed_words.append(complete_word)
+        else:
+            completed_words.append(f"Nu exista completare valida pentru '{incomplete_word}'")
+        
+        # Afisam contorul de incercari pentru cuvantul curent
+        print(f"Cuvantul completat pentru '{incomplete_word}' este '{completed_words[-1]}'")
+        print(f"Numar de incercari pentru: {attempt_counter}")
+    
+    return completed_words
+
+file_path = 'cuvinte_de_verificat.txt' 
+
+word_list, incomplete_words = load_words_from_file(file_path)
+
+completed_words = complete_incomplete_words(incomplete_words, word_list)
+
+print(f"Numarul total de incercari de completare: {attempt_counter}")
